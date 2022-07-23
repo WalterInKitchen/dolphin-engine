@@ -2,7 +2,7 @@ plugins {
     id("java")
 }
 
-group = "org.example"
+group = "com.github.walterinkitchen"
 version = "1.0-SNAPSHOT"
 
 repositories {
@@ -10,8 +10,13 @@ repositories {
 }
 
 dependencies {
-    testImplementation("org.junit.jupiter:junit-jupiter-api:5.8.1")
-    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.8.1")
+    compileOnly("org.projectlombok:lombok:1.18.24")
+
+    implementation("org.apache.commons:commons-lang3:3.12.0")
+    implementation("commons-io:commons-io:2.11.0")
+    implementation("org.codehaus.groovy:groovy:3.0.10")
+
+    testImplementation("org.spockframework:spock-core:2.2-M3-groovy-3.0")
 }
 
 tasks.getByName<Test>("test") {
