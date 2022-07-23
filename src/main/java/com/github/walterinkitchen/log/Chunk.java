@@ -8,7 +8,7 @@ package com.github.walterinkitchen.log;
  */
 public class Chunk {
     private byte[] bytes;
-    private int crc;
+    private long crc;
 
     public long getSize() {
         if (bytes == null) {
