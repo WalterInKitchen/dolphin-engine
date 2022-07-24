@@ -36,6 +36,19 @@ public class RwBinaryFile {
     }
 
     /**
+     * get file size or exception
+     *
+     * @return size
+     */
+    public long size() {
+        try {
+            return getChannel().size();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    /**
      * close
      */
     public void close() {

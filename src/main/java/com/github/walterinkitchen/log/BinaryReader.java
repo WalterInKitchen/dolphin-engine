@@ -18,4 +18,11 @@ public interface BinaryReader {
      * @return bytes buffer
      */
     ByteBuffer read(long start, int size) throws IOException;
+
+    /**
+     * get the logfile size
+     *
+     * @return size in bytes
+     */
+    long size();
 }

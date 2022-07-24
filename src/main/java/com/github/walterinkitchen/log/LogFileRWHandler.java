@@ -52,6 +52,23 @@ public class LogFileRWHandler implements BinaryReader, BinaryWriter, Closeable {
     }
 
     @Override
+    public void write(byte[] bytes) throws IOException {
+        long start = size();
+        write(start, bytes);
+    }
+
+    @Override
+    public void write(ByteBuffer buffer) throws IOException {
+        long start = size();
+        write(start, buffer);
+    }
+
+    @Override
+    public long size() {
+        return file.size();
+    }
+
+    @Override
     public void close() {
         file.close();
     }
