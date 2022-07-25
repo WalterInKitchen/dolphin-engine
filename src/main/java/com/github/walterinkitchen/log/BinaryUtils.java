@@ -21,15 +21,31 @@ public class BinaryUtils {
      */
     public static byte[] long2Bytes(long src) {
         byte[] res = new byte[8];
-        res[0] = (byte) ((src >> 56) & 0xff);
-        res[1] = (byte) ((src >> 48) & 0xff);
-        res[2] = (byte) ((src >> 40) & 0xff);
-        res[3] = (byte) ((src >> 32) & 0xff);
-        res[4] = (byte) ((src >> 24) & 0xff);
-        res[5] = (byte) ((src >> 16) & 0xff);
-        res[6] = (byte) ((src >> 8) & 0xff);
-        res[7] = (byte) (src & 0xff);
-        return res;
+        return long2Bytes(src, res, 0);
+    }
+
+    /**
+     * convert long to bytes and set to the target array at offset
+     * if target array's length not long enough,indexOutOfBoundException will be thrown
+     *
+     * @param src    long val
+     * @param target target array
+     * @param offset offset
+     * @return the target array with bytes filled at offset
+     */
+    public static byte[] long2Bytes(long src, byte[] target, int offset) {
+        if (offset + 8 > target.length) {
+            throw new ArrayIndexOutOfBoundsException();
+        }
+        target[offset] = (byte) ((src >> 56) & 0xff);
+        target[1 + offset] = (byte) ((src >> 48) & 0xff);
+        target[2 + offset] = (byte) ((src >> 40) & 0xff);
+        target[3 + offset] = (byte) ((src >> 32) & 0xff);
+        target[4 + offset] = (byte) ((src >> 24) & 0xff);
+        target[5 + offset] = (byte) ((src >> 16) & 0xff);
+        target[6 + offset] = (byte) ((src >> 8) & 0xff);
+        target[7 + offset] = (byte) (src & 0xff);
+        return target;
     }
 
     /**
@@ -40,11 +56,27 @@ public class BinaryUtils {
      */
     public static byte[] int2Bytes(int src) {
         byte[] res = new byte[4];
-        res[0] = (byte) ((src >> 24) & 0xff);
-        res[1] = (byte) ((src >> 16) & 0xff);
-        res[2] = (byte) ((src >> 8) & 0xff);
-        res[3] = (byte) (src & 0xff);
-        return res;
+        return int2Bytes(src, res, 0);
+    }
+
+    /**
+     * convert int to bytes and set to the target array at offset
+     * if target array's length not long enough,indexOutOfBoundException will be thrown
+     *
+     * @param src    int val
+     * @param target target array
+     * @param offset offset
+     * @return the target array with bytes filled at offset
+     */
+    public static byte[] int2Bytes(int src, byte[] target, int offset) {
+        if (offset + 4 > target.length) {
+            throw new ArrayIndexOutOfBoundsException();
+        }
+        target[offset] = (byte) ((src >> 24) & 0xff);
+        target[1 + offset] = (byte) ((src >> 16) & 0xff);
+        target[2 + offset] = (byte) ((src >> 8) & 0xff);
+        target[3 + offset] = (byte) (src & 0xff);
+        return target;
     }
 
     /**
@@ -78,8 +110,34 @@ public class BinaryUtils {
      * @return crc
      */
     public static long crc32(byte[] bytes) {
+        return crc32(bytes, 0, bytes.length);
+    }
+
+    /**
+     * calculate the crc32 from int and bytes
+     *
+     * @param intV  int val
+     * @param bytes bytes
+     * @return crc
+     */
+    public static long crc32(int intV, byte[] bytes) {
         CRC32C crc32C = new CRC32C();
+        crc32C.update(intV);
         crc32C.update(bytes, 0, bytes.length);
+        return crc32C.getValue();
+    }
+
+    /**
+     * calculate the crc32 from bytes
+     *
+     * @param bytes  bytes
+     * @param offset offset
+     * @param length length
+     * @return crc
+     */
+    public static long crc32(byte[] bytes, int offset, int length) {
+        CRC32C crc32C = new CRC32C();
+        crc32C.update(bytes, offset, length);
         return crc32C.getValue();
     }
 }

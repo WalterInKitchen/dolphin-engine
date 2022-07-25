@@ -23,7 +23,7 @@ public class Chunk implements BinaryDurable {
 
     @Override
     public long address() {
-        return 0;
+        return this.adder;
     }
 
     @Override
@@ -38,11 +38,17 @@ public class Chunk implements BinaryDurable {
 
     @Override
     public byte[] toBinary() {
-        return new byte[0];
+        byte[] res = new byte[binarySize()];
+        BinaryUtils.int2Bytes(this.payloadSize, res, 0);
+        int offset = 4;
+        System.arraycopy(this.payload, 0, res, offset, this.payload.length);
+        offset += this.payload.length;
+        BinaryUtils.long2Bytes(crc, res, offset);
+        return res;
     }
 
     @Override
-    public int size() {
+    public int binarySize() {
         return this.payloadSize + 8 + 4;
     }
 
@@ -59,7 +65,7 @@ public class Chunk implements BinaryDurable {
      */
     public static Chunk build(byte[] payload) {
         byte[] bytes = Optional.ofNullable(payload).orElse(new byte[0]);
-        long crc = BinaryUtils.crc32(bytes);
+        long crc = BinaryUtils.crc32(bytes.length, bytes);
         return new Chunk(-1, bytes.length, bytes, crc);
     }
 }

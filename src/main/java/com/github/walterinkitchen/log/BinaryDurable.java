@@ -40,7 +40,7 @@ public interface BinaryDurable {
      *
      * @return size
      */
-    int size();
+    int binarySize();
 
     /**
      * crc
