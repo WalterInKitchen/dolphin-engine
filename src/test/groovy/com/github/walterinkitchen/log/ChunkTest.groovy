@@ -1,5 +1,6 @@
 package com.github.walterinkitchen.log
 
+import com.github.walterinkitchen.exception.IntegrityBrokenError
 import spock.lang.Specification
 
 /**
@@ -50,6 +51,81 @@ class ChunkTest extends Specification {
 
         where: 'cases'
         source << [[], [0], [1, 2, 3], [1, 2, 3, 4, 5, 6, 7, 8]]
+    }
+
+    def 'build chunk from binary should return instance with correct properties'() {
+        given: 'source'
+        byte[] bytes = source as byte[]
+        def original = Chunk.build(bytes)
+        def binary = original.toBinary()
+
+        when: 'build instance from binary'
+        def instance = Chunk.fromBinary(address, binary)
+
+        then: 'address matched'
+        instance != null
+        instance.address() == address
+
+        then: 'to binary should eq to the original binary'
+        instance.toBinary() == binary
+
+        where: 'cases'
+        address    | source
+        0          | []
+        11         | [1, 2, 3]
+        0xffffffff | [0, 1, 2, 3, 4, 5, 6]
+    }
+
+    def 'build chunk from binary should throw exception if binary size less than non-payload info size'() {
+        given: 'source'
+        byte[] binary = source as byte[]
+
+        when: 'build instance from binary'
+        Chunk.fromBinary(0l, binary)
+
+        then: 'should throw exception'
+        def e = thrown(IntegrityBrokenError)
+        e.message == 'binary is broken'
+
+        where: 'cases'
+        source << [[], [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]]
+    }
+
+    def 'build chunk throw exception if payload not long enough'() {
+        given: 'source'
+        byte[] binary = [payloadSize, payload, crc].flatten() as byte[]
+
+        when: 'build instance from binary'
+        Chunk.fromBinary(0l, binary)
+
+        then: 'should throw exception'
+        def e = thrown(IntegrityBrokenError)
+        e.message == 'binary is broken,binary not long enough'
+
+        where: 'cases that payloadSize will make array not long enough'
+        payloadSize  | payload   | crc
+        [0, 0, 0, 1] | []        | [0, 0, 0, 0, 0, 0, 0, 0]
+        [0, 0, 0, 2] | [0]       | [0, 0, 0, 0, 0, 0, 0, 0]
+        [0, 0, 0, 3] | [0, 0]    | [0, 0, 0, 0, 0, 0, 0, 0]
+        [0, 0, 0, 4] | [0, 0, 0] | [0, 0, 0, 0, 0, 0, 0, 0]
+    }
+
+    def 'build chunk throw exception if crc not match'() {
+        given: 'source'
+        byte[] binary = [BinaryUtils.int2Bytes(payloadSize), payload, BinaryUtils.long2Bytes(crc)].flatten() as byte[]
+
+        when: 'build instance from binary'
+        Chunk.fromBinary(0l, binary)
+
+        then: 'should throw exception'
+        def e = thrown(IntegrityBrokenError)
+        e.message == 'binary is broken,crc not matched'
+
+        where: 'cases that payloadSize will make array not long enough'
+        payloadSize | payload | crc
+        0           | []      | 0L
+        1           | [20]    | 0L
+        1           | [20, 2] | 0L
     }
 
     byte[] buildChunkBinaryBytes(byte[] src) {

@@ -2,7 +2,7 @@
 <project version="4">
   <component name="top.walterInKitchen.gitDiff">
     <option name="branch1" value="master" />
-    <option name="branch2" value="dev" />
+    <option name="branch2" value="master" />
     <option name="remote1" value="origin" />
     <option name="remote2" value="Local" />
   </component>

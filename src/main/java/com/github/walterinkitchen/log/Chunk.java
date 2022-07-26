@@ -1,5 +1,7 @@
 package com.github.walterinkitchen.log;
 
+import com.github.walterinkitchen.exception.IntegrityBrokenError;
+
 import java.util.Optional;
 
 /**
@@ -13,6 +15,10 @@ public class Chunk implements BinaryDurable {
     private final int payloadSize;
     private final byte[] payload;
     private final long crc;
+
+    private static final int HEADER_SIZE = 4;
+    private static final int TAIL_SIZE = 8;
+    private static final int NON_PAYLOAD_SIZE = HEADER_SIZE + TAIL_SIZE;
 
     private Chunk(long adder, int payloadSize, byte[] payload, long crc) {
         this.adder = adder;
@@ -49,12 +55,40 @@ public class Chunk implements BinaryDurable {
 
     @Override
     public int binarySize() {
-        return this.payloadSize + 8 + 4;
+        return this.payloadSize + NON_PAYLOAD_SIZE;
     }
 
     @Override
     public long crc() {
         return this.crc;
+    }
+
+    /**
+     * build instance from binary bytes
+     *
+     * @param adder address
+     * @param bytes the binary bytes
+     * @return instance or {@link IntegrityBrokenError}
+     */
+    public static Chunk fromBinary(long adder, byte[] bytes) {
+        if (bytes == null || adder < 0) {
+            throw new IllegalArgumentException();
+        }
+        if (bytes.length < NON_PAYLOAD_SIZE) {
+            throw new IntegrityBrokenError("binary is broken");
+        }
+        int payloadSize = BinaryUtils.bytes2Int(bytes, 0);
+        if (payloadSize + NON_PAYLOAD_SIZE > bytes.length) {
+            throw new IntegrityBrokenError("binary is broken,binary not long enough");
+        }
+        byte[] payload = new byte[payloadSize];
+        System.arraycopy(bytes, 4, payload, 0, payloadSize);
+        long crc = BinaryUtils.bytes2Long(bytes, 4 + payloadSize);
+        long realCrc = BinaryUtils.crc32(payloadSize, payload);
+        if (realCrc - crc != 0) {
+            throw new IntegrityBrokenError("binary is broken,crc not matched");
+        }
+        return new Chunk(adder, payloadSize, payload, crc);
     }
 
     /**

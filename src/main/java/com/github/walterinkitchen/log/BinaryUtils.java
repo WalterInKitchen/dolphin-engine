@@ -84,11 +84,17 @@ public class BinaryUtils {
      *
      * @param bytes  bytes
      * @param offset offset
-     * @param size   byte size
      * @return long
      */
-    public static long bytes2Long(byte[] bytes, int offset, int size) {
-        return 0l;
+    public static long bytes2Long(byte[] bytes, int offset) {
+        if (bytes == null) {
+            throw new IllegalArgumentException();
+        }
+        if (offset + 8 > bytes.length) {
+            throw new IllegalArgumentException("array not long enough");
+        }
+        return (long) (bytes[offset] & 0xff) << 56 | (long) (bytes[offset + 1] & 0xff) << 48 | (long) (bytes[offset + 2] & 0xff) << 40 | (long) (bytes[offset + 3] & 0xff) << 32
+                | (long) (bytes[offset + 4] & 0xff) << 24 | (bytes[offset + 5] & 0xff) << 16 | (bytes[offset + 6] & 0xff) << 8 | (bytes[offset + 7] & 0xff);
     }
 
     /**
@@ -96,11 +102,16 @@ public class BinaryUtils {
      *
      * @param bytes  bytes
      * @param offset offset
-     * @param size   byte size
      * @return int
      */
-    public static int bytes2Int(byte[] bytes, int offset, int size) {
-        return 0;
+    public static int bytes2Int(byte[] bytes, int offset) {
+        if (bytes == null) {
+            throw new IllegalArgumentException();
+        }
+        if (offset + 4 > bytes.length) {
+            throw new IllegalArgumentException("array not long enough");
+        }
+        return (bytes[offset] & 0xff) << 24 | (bytes[offset + 1] & 0xff) << 16 | (bytes[offset + 2] & 0xff) << 8 | (bytes[offset + 3] & 0xff);
     }
 
     /**

@@ -158,6 +158,83 @@ class BinaryUtilsTest extends Specification {
         [1, 2, 3, 4] | 1      | 2
     }
 
+    def 'bytes to int should return int val'() {
+        given: 'source'
+        byte[] bytes = source as byte[]
+
+        when: 'convert'
+        def res = BinaryUtils.bytes2Int(bytes, offset)
+
+        then: 'with expected'
+        res == expected
+
+        where: 'cases'
+        source                      | offset | expected
+        [0, 0, 0, 0]                | 0      | 0
+        [0xff, 0xff, 0xff, 0xff]    | 0      | 0xffffffff as int
+        [0, 0xff, 0xff, 0xff, 0xff] | 1      | 0xffffffff as int
+        [0, 1, 2, 3, 4]             | 1      | 0x01020304 as int
+        [0, 1, 2, 3, 4]             | 0      | 0x00010203 as int
+    }
+
+    def 'bytes to int should throw exception if bytes not long enough'() {
+        given: 'source'
+        byte[] bytes = source as byte[]
+
+        when: 'convert'
+        def res = BinaryUtils.bytes2Int(bytes, offset)
+
+        then: 'with expected'
+        thrown(IllegalArgumentException)
+
+        where: 'cases'
+        source       | offset
+        [0, 0, 0, 0] | 1
+        [0, 0, 0, 0] | 2
+        [0, 0, 0, 0] | 3
+        [0, 0, 0, 0] | 4
+    }
+
+    def 'bytes to long should return long val'() {
+        given: 'source'
+        byte[] bytes = source as byte[]
+
+        when: 'convert'
+        def res = BinaryUtils.bytes2Long(bytes, offset)
+
+        then: 'with expected'
+        res == expected
+
+        where: 'cases'
+        source                                           | offset | expected
+        [0, 0, 0, 0, 0, 0, 0, 0]                         | 0      | 0 as long
+        [1, 2, 3, 4, 5, 6, 7, 8]                         | 0      | 0x0102030405060708 as long
+        [0, 1, 2, 3, 4, 5, 6, 7, 8]                      | 1      | 0x0102030405060708 as long
+        [0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff] | 0      | 0xffffffffffffffff as long
+    }
+
+    def 'bytes to long should throw exception if bytes not long enough'() {
+        given: 'source'
+        byte[] bytes = source as byte[]
+
+        when: 'convert'
+        def res = BinaryUtils.bytes2Long(bytes, offset)
+
+        then: 'with expected'
+        thrown(IllegalArgumentException)
+
+        where: 'cases'
+        source                   | offset
+        [0, 0, 0, 0, 0, 0, 0, 0] | 1
+        [0, 0, 0, 0, 0, 0, 0, 0] | 2
+        [0, 0, 0, 0, 0, 0, 0, 0] | 3
+        [0, 0, 0, 0, 0, 0, 0, 0] | 4
+        [0, 0, 0, 0, 0, 0, 0, 0] | 5
+        [0, 0, 0, 0, 0, 0, 0, 0] | 6
+        [0, 0, 0, 0, 0, 0, 0, 0] | 7
+        [0, 0, 0, 0, 0, 0, 0, 0] | 8
+    }
+
     long calculateCrc(byte[] bytes, int offset, int len) {
         def crcc = new CRC32C()
         crcc.update(bytes, offset, len)
