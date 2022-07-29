@@ -15,7 +15,7 @@ class ChunkTest extends Specification {
         byte[] bytes = source as byte[]
 
         when: 'get property'
-        Chunk chunk = Chunk.build(bytes);
+        Chunk chunk = Chunk.build(-1, bytes);
 
         then: 'with collect size'
         with(chunk) {
@@ -23,7 +23,7 @@ class ChunkTest extends Specification {
             payloadSize() == bytes.size()
             binarySize() == expectedSize
             address() == -1
-            crc() == BinaryUtils.crc32(payloadSize(), payload())
+            crc() == BinaryUtils.crc32([BinaryUtils.int2Bytes(payloadSize()), payload()].flatten() as byte[])
         }
 
         where: 'cases'
@@ -39,7 +39,7 @@ class ChunkTest extends Specification {
         byte[] bytes = source as byte[]
 
         when: 'to binary'
-        Chunk chunk = Chunk.build(bytes);
+        Chunk chunk = Chunk.build(-1, bytes);
         byte[] res = chunk.toBinary()
 
         then: 'size matched'
@@ -56,7 +56,7 @@ class ChunkTest extends Specification {
     def 'build chunk from binary should return instance with correct properties'() {
         given: 'source'
         byte[] bytes = source as byte[]
-        def original = Chunk.build(bytes)
+        def original = Chunk.build(-1, bytes)
         def binary = original.toBinary()
 
         when: 'build instance from binary'
@@ -130,7 +130,7 @@ class ChunkTest extends Specification {
 
     byte[] buildChunkBinaryBytes(byte[] src) {
         byte[] header = BinaryUtils.int2Bytes(src.size())
-        long crc = BinaryUtils.crc32(src.length, src)
+        long crc = BinaryUtils.crc32([BinaryUtils.int2Bytes(src.size()), src].flatten() as byte[])
         byte[] tail = BinaryUtils.long2Bytes(crc)
         return [header, src, tail].flatten() as byte[]
     }

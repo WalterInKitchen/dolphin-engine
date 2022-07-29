@@ -51,8 +51,7 @@ public class INode implements BinaryDurable {
     @Override
     public long crc() {
         int end = binarySize();
-        byte[] source = Arrays.copyOfRange(this.binary, end - 8, end);
-        return BinaryUtils.bytes2Long(source, 0);
+        return BinaryUtils.bytes2Long(this.binary, end - 8);
     }
 
     /**

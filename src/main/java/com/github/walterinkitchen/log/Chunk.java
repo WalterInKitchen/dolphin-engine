@@ -2,6 +2,7 @@ package com.github.walterinkitchen.log;
 
 import com.github.walterinkitchen.exception.IntegrityBrokenError;
 
+import java.util.Arrays;
 import java.util.Optional;
 
 /**
@@ -11,20 +12,17 @@ import java.util.Optional;
  * @since 1.0
  */
 public class Chunk implements BinaryDurable {
-    private final long adder;
-    private final int payloadSize;
-    private final byte[] payload;
-    private final long crc;
-
+    private static final int PAYLOAD_SIZE_OFFSET = 0;
+    private static final int PAYLOAD_OFFSET = PAYLOAD_SIZE_OFFSET + 4;
     private static final int HEADER_SIZE = 4;
     private static final int TAIL_SIZE = 8;
     private static final int NON_PAYLOAD_SIZE = HEADER_SIZE + TAIL_SIZE;
+    private final long adder;
+    private final byte[] binary;
 
-    private Chunk(long adder, int payloadSize, byte[] payload, long crc) {
+    private Chunk(long adder, byte[] binary) {
         this.adder = adder;
-        this.payloadSize = payloadSize;
-        this.payload = payload;
-        this.crc = crc;
+        this.binary = binary;
     }
 
     @Override
@@ -34,33 +32,28 @@ public class Chunk implements BinaryDurable {
 
     @Override
     public int payloadSize() {
-        return this.payloadSize;
+        return BinaryUtils.bytes2Int(this.binary, PAYLOAD_SIZE_OFFSET);
     }
 
     @Override
     public byte[] payload() {
-        return this.payload;
+        return Arrays.copyOfRange(this.binary, PAYLOAD_OFFSET, binarySize() - 8);
     }
 
     @Override
     public byte[] toBinary() {
-        byte[] res = new byte[binarySize()];
-        BinaryUtils.int2Bytes(this.payloadSize, res, 0);
-        int offset = 4;
-        System.arraycopy(this.payload, 0, res, offset, this.payload.length);
-        offset += this.payload.length;
-        BinaryUtils.long2Bytes(crc, res, offset);
-        return res;
+        return this.binary;
     }
 
     @Override
     public int binarySize() {
-        return this.payloadSize + NON_PAYLOAD_SIZE;
+        return this.binary.length;
     }
 
     @Override
     public long crc() {
-        return this.crc;
+        int end = this.binary.length;
+        return BinaryUtils.bytes2Long(this.binary, end - 8);
     }
 
     /**
@@ -81,25 +74,30 @@ public class Chunk implements BinaryDurable {
         if (payloadSize + NON_PAYLOAD_SIZE > bytes.length) {
             throw new IntegrityBrokenError("binary is broken,binary not long enough");
         }
-        byte[] payload = new byte[payloadSize];
-        System.arraycopy(bytes, 4, payload, 0, payloadSize);
         long crc = BinaryUtils.bytes2Long(bytes, 4 + payloadSize);
-        long realCrc = BinaryUtils.crc32(payloadSize, payload);
+        long realCrc = BinaryUtils.crc32(bytes, 0, bytes.length - 8);
         if (realCrc - crc != 0) {
             throw new IntegrityBrokenError("binary is broken,crc not matched");
         }
-        return new Chunk(adder, payloadSize, payload, crc);
+        return new Chunk(adder, bytes);
     }
 
     /**
      * build with payload
      *
+     * @param adder   adder
      * @param payload payload
      * @return instance
      */
-    public static Chunk build(byte[] payload) {
+    public static Chunk build(long adder, byte[] payload) {
         byte[] bytes = Optional.ofNullable(payload).orElse(new byte[0]);
-        long crc = BinaryUtils.crc32(bytes.length, bytes);
-        return new Chunk(-1, bytes.length, bytes, crc);
+
+        int size = bytes.length + 4 + 8;
+        byte[] binary = new byte[size];
+        BinaryUtils.int2Bytes(bytes.length, binary, 0);
+        System.arraycopy(bytes, 0, binary, PAYLOAD_OFFSET, bytes.length);
+        long crc = BinaryUtils.crc32(binary, 0, size - 8);
+        BinaryUtils.long2Bytes(crc, binary, size - 8);
+        return new Chunk(adder, binary);
     }
 }
