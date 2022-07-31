@@ -61,22 +61,20 @@ public class IMap implements BinaryDurable {
      * @return instance
      */
     public static IMap build(long adder, Map<Long, Long> nodes) {
-        if (adder < 0 || nodes == null) {
-            throw new IllegalArgumentException();
-        }
-        Optional<Map.Entry<Long, Long>> invalid = nodes
-                .entrySet()
-                .stream()
-                .filter(ety -> ety.getKey() == null || ety.getValue() == null)
-                .findFirst();
-        if (invalid.isPresent()) {
-            throw new IllegalArgumentException();
-        }
+        assertIfNodsIsInvalid(adder, nodes);
+
         int nodesSize = nodes.size();
         int payloadSize = 4 + nodesSize * 8 * 2;
         int binarySize = payloadSize + 4 + 8;
         byte[] binary = new byte[binarySize];
         BinaryUtils.int2Bytes(payloadSize, binary, PAYLOAD_OFFSET);
+        int start = buildNodes(nodes, nodesSize, binary);
+        long crc = BinaryUtils.crc32(binary, 0, start);
+        BinaryUtils.long2Bytes(crc, binary, start);
+        return IMap.builder().adder(adder).binary(binary).build();
+    }
+
+    private static int buildNodes(Map<Long, Long> nodes, int nodesSize, byte[] binary) {
         byte[] ids = new byte[nodesSize * 8];
         byte[] address = new byte[nodesSize * 8];
         BinaryUtils.int2Bytes(nodesSize, binary, INODE_SIZE_OFFSET);
@@ -92,9 +90,20 @@ public class IMap implements BinaryDurable {
         start += ids.length;
         System.arraycopy(address, 0, binary, start, address.length);
         start += address.length;
+        return start;
+    }
 
-        long crc = BinaryUtils.crc32(binary, 0, start);
-        BinaryUtils.long2Bytes(crc, binary, start);
-        return IMap.builder().adder(adder).binary(binary).build();
+    private static void assertIfNodsIsInvalid(long adder, Map<Long, Long> nodes) {
+        if (adder < 0 || nodes == null) {
+            throw new IllegalArgumentException();
+        }
+        Optional<Map.Entry<Long, Long>> invalid = nodes
+                .entrySet()
+                .stream()
+                .filter(ety -> ety.getKey() == null || ety.getValue() == null)
+                .findFirst();
+        if (invalid.isPresent()) {
+            throw new IllegalArgumentException();
+        }
     }
 }
